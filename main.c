@@ -530,9 +530,11 @@ static void hids_init(void)
     ret_code_t                err_code;
     ble_hids_init_t           hids_init_obj;
     ble_hids_inp_rep_init_t * p_input_report;
+    ble_hids_feature_rep_init_t * p_feature_report;
     uint8_t                   hid_info_flags;
 
     static ble_hids_inp_rep_init_t inp_rep_array[INPUT_REPORT_COUNT];
+    static ble_hids_feature_rep_init_t feature_rep_array[1];
     static uint8_t rep_map_data[] =
     {
         0x05, 0x01, // Usage Page (Generic Desktop)
@@ -656,6 +658,8 @@ static void hids_init(void)
     };
 
     memset(inp_rep_array, 0, sizeof(inp_rep_array));
+    memset(feature_rep_array, 0, sizeof(feature_rep_array));
+
     // Initialize HID Service.
     p_input_report                      = &inp_rep_array[INPUT_REP_BUTTONS_INDEX];
     p_input_report->max_len             = INPUT_REP_BUTTONS_LEN;
@@ -684,6 +688,16 @@ static void hids_init(void)
     p_input_report->sec.wr      = SEC_JUST_WORKS;
     p_input_report->sec.rd      = SEC_JUST_WORKS;
 
+    // Set up feature report 
+    p_feature_report                        = &feature_rep_array[0];
+    p_feature_report->max_len               = 1;
+    p_feature_report->rep_ref.report_id     = 1;
+    p_feature_report->rep_ref.report_type   = BLE_HIDS_REP_TYPE_FEATURE;
+    p_feature_report->sec.cccd_wr           = SEC_JUST_WORKS;
+    p_feature_report->sec.wr                = SEC_JUST_WORKS;
+    p_feature_report->sec.rd                = SEC_JUST_WORKS;
+
+
     hid_info_flags = HID_INFO_FLAG_REMOTE_WAKE_MSK | HID_INFO_FLAG_NORMALLY_CONNECTABLE_MSK;
 
     memset(&hids_init_obj, 0, sizeof(hids_init_obj));
@@ -696,8 +710,8 @@ static void hids_init(void)
     hids_init_obj.p_inp_rep_array                = inp_rep_array;
     hids_init_obj.outp_rep_count                 = 0;
     hids_init_obj.p_outp_rep_array               = NULL;
-    hids_init_obj.feature_rep_count              = 0;
-    hids_init_obj.p_feature_rep_array            = NULL;
+    hids_init_obj.feature_rep_count              = 1;
+    hids_init_obj.p_feature_rep_array            = feature_rep_array;
     hids_init_obj.rep_map.data_len               = sizeof(rep_map_data);
     hids_init_obj.rep_map.p_data                 = rep_map_data;
     hids_init_obj.hid_information.bcd_hid        = BASE_USB_HID_SPEC_VERSION;
@@ -834,7 +848,12 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt)
             break;
 
         case BLE_HIDS_EVT_REP_CHAR_WRITE:
-            NRF_LOG_INFO("Write occurred!!");
+            NRF_LOG_INFO("Unhandled Write occurred!!");
+            break;
+
+        case BLE_HIDS_EVT_REPORT_READ:
+            //NRF_LOG_INFO("Undhandled read occurred!!");
+            NRF_LOG_INFO("Report read: char type: %i, %i", p_evt->params.char_auth_read.char_id.rep_type, p_evt->params.char_auth_read.char_id.rep_index);
             break;
 
         default:
