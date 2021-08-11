@@ -1390,6 +1390,80 @@ uint32_t ble_hids_inp_rep_send(ble_hids_t * p_hids,
 }
 
 
+uint32_t ble_hids_feature_rep_send(ble_hids_t * p_hids,
+                                   uint8_t      rep_index,
+                                   uint16_t     len,
+                                   uint8_t    * p_data,
+                                   uint16_t     conn_handle)
+{
+    VERIFY_PARAM_NOT_NULL(p_hids);
+    VERIFY_PARAM_NOT_NULL(p_data);
+
+    uint32_t err_code;
+
+    if (rep_index < p_hids->feature_rep_count)
+    {
+        ble_hids_rep_char_t * p_rep_char = &p_hids->feature_rep_array[rep_index];
+
+        if (conn_handle != BLE_CONN_HANDLE_INVALID)
+        {
+            ble_gatts_hvx_params_t hvx_params;
+            uint8_t                index   = 0;
+            uint16_t               hvx_len = len;
+            uint8_t              * p_host_rep_data;
+
+            err_code = blcm_link_ctx_get(p_hids->p_link_ctx_storage,
+                                         conn_handle,
+                                         (void *) &p_host_rep_data);
+            VERIFY_SUCCESS(err_code);
+
+            p_host_rep_data += sizeof(ble_hids_client_context_t) + BOOT_KB_INPUT_REPORT_MAX_SIZE +
+                               BOOT_KB_OUTPUT_REPORT_MAX_SIZE + BOOT_MOUSE_INPUT_REPORT_MAX_SIZE;
+
+            // Store the new report data in host's context
+            while (index < rep_index)
+            {
+                p_host_rep_data += p_hids->p_inp_rep_init_array[index].max_len;
+                ++index;
+            }
+
+            if (len <= p_hids->p_inp_rep_init_array[rep_index].max_len)
+            {
+                //memcpy(p_host_rep_data, p_data, len); // TOO: Not sure if we should do this for feature reports....
+            }
+            else
+            {
+                return NRF_ERROR_DATA_SIZE;
+            }
+
+            // Notify host
+            memset(&hvx_params, 0, sizeof(hvx_params));
+
+            hvx_params.handle = p_rep_char->char_handles.value_handle;
+            hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+            hvx_params.offset = 0;
+            hvx_params.p_len  = &hvx_len;
+            hvx_params.p_data = p_data;
+
+            err_code = sd_ble_gatts_hvx(conn_handle, &hvx_params);
+            if ((err_code == NRF_SUCCESS) && (*hvx_params.p_len != len))
+            {
+                err_code = NRF_ERROR_DATA_SIZE;
+            }
+        }
+        else
+        {
+            err_code = NRF_ERROR_INVALID_STATE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_PARAM;
+    }
+
+    return err_code;
+}                          
+
 uint32_t ble_hids_boot_kb_inp_rep_send(ble_hids_t * p_hids,
                                        uint16_t     len,
                                        uint8_t    * p_data,

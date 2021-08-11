@@ -370,6 +370,13 @@ uint32_t ble_hids_inp_rep_send(ble_hids_t * p_hids,
                                uint8_t    * p_data,
                                uint16_t     conn_handle);
 
+
+uint32_t ble_hids_feature_rep_send(ble_hids_t * p_hids,
+                                   uint8_t      rep_index,
+                                   uint16_t     len,
+                                   uint8_t    * p_data,
+                                   uint16_t     conn_handle);
+
 /**@brief Function for sending Boot Keyboard Input Report.
  *
  * @details Sends data on an Boot Keyboard Input Report characteristic.

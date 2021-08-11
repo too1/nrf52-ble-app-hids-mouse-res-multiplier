@@ -592,20 +592,22 @@ static void hids_init(void)
     0xa1, 0x02,        //       COLLECTION (Logical)
                         // ------------------------------  Vertical wheel res multiplier
      0x09, 0x48,        //         USAGE (Resolution Multiplier)
+     0x75, 0x02,        //         REPORT_SIZE (2)
      0x15, 0x00,        //         LOGICAL_MINIMUM (0)
      0x25, 0x01,        //         LOGICAL_MAXIMUM (1)
      0x35, 0x01,        //         PHYSICAL_MINIMUM (1)
      0x45, 0x04,        //         PHYSICAL_MAXIMUM (4)
-     0x75, 0x02,        //         REPORT_SIZE (2)
-     0x95, 0x01,        //         REPORT_COUNT (1)
-     0xa4,              //         PUSH
      0xb1, 0x02,        //         FEATURE (Data,Var,Abs)
+     0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
+     0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
+     0x75, 0x04,        //         REPORT_SIZE (4)
+     0xb1, 0x01,        //         FEATURE (Const,Ary,Abs)
+     //0xa4,              //         PUSH
+
                         // ------------------------------  Vertical wheel
      0x09, 0x38,        //         USAGE (Wheel)
      0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
      0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
-     0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
-     0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
      0x75, 0x08,        //         REPORT_SIZE (8)
      0x81, 0x06,        //         INPUT (Data,Var,Rel)
      0xc0,              //       END_COLLECTION
@@ -837,14 +839,17 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt)
     switch (p_evt->evt_type)
     {
         case BLE_HIDS_EVT_BOOT_MODE_ENTERED:
+            NRF_LOG_INFO("HIDS boot mode entered");
             m_in_boot_mode = true;
             break;
 
         case BLE_HIDS_EVT_REPORT_MODE_ENTERED:
+            NRF_LOG_INFO("HIDS report mode entered");
             m_in_boot_mode = false;
             break;
 
         case BLE_HIDS_EVT_NOTIF_ENABLED:
+            NRF_LOG_INFO("HIDS notif enabled");
             break;
 
         case BLE_HIDS_EVT_REP_CHAR_WRITE:
@@ -1281,6 +1286,7 @@ static void bsp_event_handler(bsp_event_t event)
         case BSP_EVENT_KEY_0:
             if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
             {
+                NRF_LOG_INFO("Btn1: Move");
                 mouse_movement_send(-MOVEMENT_SPEED, 0);
             }
             break;
@@ -1288,6 +1294,7 @@ static void bsp_event_handler(bsp_event_t event)
         case BSP_EVENT_KEY_1:
             if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
             {
+                NRF_LOG_INFO("Btn2: Move");
                 mouse_movement_send(0, -MOVEMENT_SPEED);
             }
             break;
@@ -1295,6 +1302,7 @@ static void bsp_event_handler(bsp_event_t event)
         case BSP_EVENT_KEY_2:
             if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
             {
+                NRF_LOG_INFO("Btn3: Scroll");
                 mouse_scroll_send(-20);
             }
             break;
@@ -1302,6 +1310,7 @@ static void bsp_event_handler(bsp_event_t event)
         case BSP_EVENT_KEY_3:
             if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
             {
+                NRF_LOG_INFO("Btn4: Scroll");
                 mouse_scroll_send(20);
             }
             break;
